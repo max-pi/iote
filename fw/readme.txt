@@ -1,0 +1,1 @@
+# folder for bluetooth fw
