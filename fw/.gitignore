@@ -1,0 +1,35 @@
+#################
+## Eclipse
+#################
+
+*.pydevproject
+.metadata
+bin/
+tmp/
+*.tmp
+*.bak
+*.swp
+*~.nib
+*.pyc
+local.properties
+.classpath
+.loadpath
+
+.project
+.cproject
+.settings/
+*.launch
+
+#################
+## Nordic
+#################
+
+_build*/
+
+#################
+## Mac Junk Files
+#################
+
+.DS_Store
+._.DS_Store
+._*

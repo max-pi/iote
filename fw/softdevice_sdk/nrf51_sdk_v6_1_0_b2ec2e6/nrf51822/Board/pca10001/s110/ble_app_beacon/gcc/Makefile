@@ -1,11 +1,15 @@
-TARGET_CHIP := NRF51822_QFAA_CA
-BOARD := BOARD_PCA10001
+TARGET_CHIP := NRF51822_QFAA_G0
+BOARD := BOARD_PCA10000
 
 C_SOURCE_FILES += main.c
 C_SOURCE_FILES += softdevice_handler.c
 C_SOURCE_FILES += ble_advdata.c
 C_SOURCE_FILES += ble_debug_assert_handler.c
 C_SOURCE_FILES += ble_srv_common.c
+C_SOURCE_FILES += retarget.c
+C_SOURCE_FILES += simple_uart.c
+
+
 
 SDK_PATH = ../../../../../
 

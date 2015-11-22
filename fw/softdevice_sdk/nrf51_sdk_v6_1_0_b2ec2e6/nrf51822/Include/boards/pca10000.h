@@ -22,7 +22,7 @@
 #define TX_PIN_NUMBER  9
 #define CTS_PIN_NUMBER 10
 #define RTS_PIN_NUMBER 8
-#define HWFC           true
+#define HWFC           false
 
 // Definitions for PCA10000 v1.0
 #else

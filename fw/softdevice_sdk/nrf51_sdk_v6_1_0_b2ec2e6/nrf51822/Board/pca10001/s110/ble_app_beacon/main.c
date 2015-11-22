@@ -22,18 +22,23 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
+#include <stdio.h>
 #include "ble_advdata.h"
 #include "boards.h"
 #include "nordic_common.h"
 #include "softdevice_handler.h"
+#include "nrf_gpio.h"
+#include "ble_debug_assert_handler.h"
+#include "retarget.h"
+#include "simple_uart.h"
 
 #define IS_SRVC_CHANGED_CHARACT_PRESENT  0                                 /**< Include or not the service_changed characteristic. if not enabled, the server's database cannot be changed for the lifetime of the device*/
 
-#define ADVERTISING_LED_PIN_NO           LED_0                             /**< Is on when device is advertising. */
+#define ADVERTISING_LED_PIN_NO           LED_RGB_BLUE                             /**< Is on when device is advertising. */
 
 #define APP_CFG_NON_CONN_ADV_TIMEOUT     0                                 /**< Time for which the device must be advertising in non-connectable mode (in seconds). 0 disables timeout. */
 #define NON_CONNECTABLE_ADV_INTERVAL     MSEC_TO_UNITS(100, UNIT_0_625_MS) /**< The advertising interval for non-connectable advertisement (100 ms). This value can vary between 100ms to 10.24s). */
-
 #define APP_BEACON_INFO_LENGTH           0x17                              /**< Total length of information advertised by the Beacon. */
 #define APP_ADV_DATA_LENGTH              0x15                              /**< Length of manufacturer specific data in the advertisement. */
 #define APP_DEVICE_TYPE                  0x02                              /**< 0x02 refers to Beacon. */
@@ -86,10 +91,14 @@ void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t * p
     //                The flash write will happen EVEN if the radio is active, thus interrupting
     //                any communication.
     //                Use with care. Un-comment the line below to use.
-    // ble_debug_assert_handler(error_code, line_num, p_file_name);
+    printf("ASSERT\n\r");
+    printf("Error 0x%x, line %d, file: %s\n\r", (int)error_code, (int)line_num, p_file_name);
 
-    // On assert, the system can only recover on reset.
-    NVIC_SystemReset();
+	 //nrf_gpio_pin_set(LED_RGB_RED);
+     ble_debug_assert_handler(error_code, line_num, p_file_name);
+
+//    // On assert, the system can only recover on reset.
+//    NVIC_SystemReset();
 }
 
 
@@ -229,12 +238,15 @@ static void power_manage(void)
 int main(void)
 {
     // Initialize.
+	retarget_init();
+	printf("Initialization \n");
     leds_init();
     ble_stack_init();
     advertising_init();
 
     // Start execution.
     advertising_start();
+    printf("Advertising Start \n");
 
     // Enter main loop.
     for (;;)
