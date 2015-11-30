@@ -38,12 +38,12 @@
 #define ADVERTISING_LED_PIN_NO           LED_RGB_BLUE                             /**< Is on when device is advertising. */
 
 #define APP_CFG_NON_CONN_ADV_TIMEOUT     0                                 /**< Time for which the device must be advertising in non-connectable mode (in seconds). 0 disables timeout. */
-#define NON_CONNECTABLE_ADV_INTERVAL     MSEC_TO_UNITS(100, UNIT_0_625_MS) /**< The advertising interval for non-connectable advertisement (100 ms). This value can vary between 100ms to 10.24s). */
+#define NON_CONNECTABLE_ADV_INTERVAL     MSEC_TO_UNITS(5000,/ UNIT_0_625_MS) /**< The advertising interval for non-connectable advertisement (100 ms). This value can vary between 100ms to 10.24s). */
 #define APP_BEACON_INFO_LENGTH           0x17                              /**< Total length of information advertised by the Beacon. */
 #define APP_ADV_DATA_LENGTH              0x15                              /**< Length of manufacturer specific data in the advertisement. */
 #define APP_DEVICE_TYPE                  0x02                              /**< 0x02 refers to Beacon. */
 #define APP_MEASURED_RSSI                0xC3                              /**< The Beacon's measured RSSI at 1 meter distance in dBm. */
-#define APP_COMPANY_IDENTIFIER           0x4C4C                            /**< Company identifier for Apple Inc. as per www.bluetooth.org. */
+#define APP_COMPANY_IDENTIFIER           0x4C4C                            /**< Random company ID */
 
 
 
@@ -51,10 +51,12 @@
 #define APP_MAJOR_VALUE                  0x12, 0x34                        /**< Major value used to identify Beacons. */
 #define APP_MINOR_VALUE                  0xab, 0xcd                       /**< Minor value used to identify Beacons. */
 
-#define APP_BEACON_UUID                  0xFF, 0x00, 0x00, 0x00, \
-                                         0x00, 0x00, 0x00, 0x00, \
-										 0x00, 0x00, 0x00, 0x00, \
-                                         0x00, 0x00, 0x00, 0xFF
+#define APP_BEACON_UUID                  0x22, 0X4C, 0x19, 0xB2, \
+                                         0xD4, 0xC6, 0x2E, 0xA8, \
+										 0x86, 0x40, 0x82, 0x71, \
+                                         0x1D, 0xDA, 0xF0, 0xAD
+
+//ADF0DA1D-7182-4086-A82E-C6D4B2194C22
 
 #define DEAD_BEEF                        0xDEADBEEF                        /**< Value used as error code on stack dump, can be used to identify stack location on stack unwind. */
 
