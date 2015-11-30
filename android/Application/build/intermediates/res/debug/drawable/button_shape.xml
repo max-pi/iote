@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<shape      xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle">
+
+    <solid
+        android:color="@color/blue_button_color"/>
+
+    <corners    android:bottomLeftRadius="30dip"
+        android:topRightRadius="30dip"
+        android:topLeftRadius="30dip"
+        android:bottomRightRadius="30dip"
+        />
+
+</shape><!-- From: file:/Users/maxp/repos/ActionBarCompat-Styled/Application/src/main/res/drawable/button_shape.xml -->

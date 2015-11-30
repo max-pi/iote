@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:id="@+id/fragment_mybeacons">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="This is a list of the beacons you&apos;ve added so far."
+        android:id="@+id/textView2"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:textColor="@color/blue_button_text_color"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginTop="16dp"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceMedium"
+        android:text="To edit or delete one, just swipe left."
+        android:id="@+id/mybeaconsInstructionsText"
+        android:layout_below="@+id/textView2"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:textColor="@color/blue_button_text_color"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        />
+
+    <ListView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/mybeaconsListView"
+        android:layout_below="@+id/mybeaconsInstructionsText"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_above="@+id/addBeaconButton"
+        android:choiceMode="singleChoice"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        />
+
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Add a beacon"
+        android:id="@+id/addBeaconButton"
+        android:layout_above="@+id/mybeaconsFaqButton"
+        android:layout_centerHorizontal="true"
+        android:textColor="@color/blue_button_text_color"
+        android:background="@drawable/button_shape"
+        android:paddingLeft="40dp"
+        android:paddingRight="40dp"
+        />
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Need help? Read our FAQ"
+        android:id="@+id/mybeaconsFaqButton"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:textColor="@color/light_gray"
+        android:background="@android:color/transparent"
+        />
+
+
+</RelativeLayout>
+
+    <!--android:src="@drawable/apple2" />-->
+    <!--android:src="@drawable/blogger" />-->

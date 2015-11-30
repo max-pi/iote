@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/bg"
+    android:id="@+id/fragment_settings">
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Update Settings"
+        android:textColor="@color/blue_button_text_color"
+        android:id="@+id/updateSettingsButton"
+        android:layout_above="@+id/settingsFaqButton"
+        android:layout_centerHorizontal="true"
+        android:background="@drawable/button_shape"
+        android:paddingLeft="40dp"
+        android:paddingRight="40dp"
+
+        />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Change Password"
+        android:textColor="@color/white"
+        android:id="@+id/passwordButton"
+        android:layout_below="@+id/locationSpinner"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:background="@android:color/transparent"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"/>
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Log Out"
+        android:textColor="@color/white"
+        android:id="@+id/logoutButton"
+        android:layout_alignTop="@+id/passwordButton"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:background="@android:color/transparent"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        />
+
+    <Button
+        style="?android:attr/buttonStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Need help? Read our FAQ"
+        android:textColor="@color/light_gray"
+        android:id="@+id/settingsFaqButton"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:background="@android:color/transparent"/>
+
+    <ImageView
+        android:src="@drawable/logo"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:id="@+id/logoImageview"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+
+        android:layout_marginTop="16dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+        android:layout_marginBottom="0dp"
+        />
+
+    <Spinner
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/locationSpinner"
+        android:spinnerMode="dialog"
+        android:layout_below="@+id/editText"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+
+        />
+
+    <EditText
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/idTextfield"
+        android:textColor="@color/white"
+        android:layout_below="@+id/logoImageview"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:hint="E-mail / Phone"
+        android:textColorHint="@color/white"
+
+        android:padding="8dp"
+
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+
+        android:background="@drawable/custom_edittext"
+
+        />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/editText"
+        android:textColor="@color/white"
+        android:layout_below="@+id/idTextfield"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentEnd="true"
+        android:hint="Name"
+        android:textColorHint="@color/white"
+
+        android:padding="8dp"
+
+        android:layout_marginTop="8dp"
+        android:layout_marginLeft="16dp"
+        android:layout_marginRight="16dp"
+
+        android:background="@drawable/custom_edittext"
+
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textAppearance="?android:attr/textAppearanceSmall"
+        android:text="or"
+        android:textColor="@color/light_gray"
+        android:id="@+id/textView"
+        android:layout_alignBaseline="@+id/passwordButton"
+        android:layout_toRightOf="@+id/passwordButton"
+        android:layout_centerHorizontal="true"
+        android:paddingLeft="20dp"
+
+        />
+
+</RelativeLayout>
+
+    <!--android:src="@drawable/googleplus" />-->
+    <!--android:src="@drawable/linkedin" />-->
+
