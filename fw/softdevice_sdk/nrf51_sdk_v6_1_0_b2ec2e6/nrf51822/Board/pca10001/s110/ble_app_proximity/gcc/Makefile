@@ -1,5 +1,5 @@
-TARGET_CHIP := NRF51822_QFAA_CA
-BOARD := BOARD_PCA10001
+TARGET_CHIP := NRF51822_QFAA_G0
+BOARD := BOARD_PCA10000
 
 # application source
 C_SOURCE_FILES += main.c
@@ -25,6 +25,10 @@ C_SOURCE_FILES += simple_uart.c
 C_SOURCE_FILES += app_gpiote.c
 C_SOURCE_FILES += app_button.c
 C_SOURCE_FILES += app_timer.c
+
+#for printf
+C_SOURCE_FILES += retarget.c
+C_SOURCE_FILES += simple_uart.c
 
 SDK_PATH = ../../../../../
 

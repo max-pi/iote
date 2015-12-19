@@ -63,8 +63,8 @@
 #define STOP_ALERTING_BUTTON              BUTTON_1                                          /**< Button used for clearing the Alert LED that may be blinking or turned ON because of alerts from the central. */
 #define BOND_DELETE_ALL_BUTTON_ID         BUTTON_1                                          /**< Button used for deleting all bonded centrals during startup. */
 
-#define ADVERTISING_LED_PIN_NO            LED_0                                             /**< Is on when device is advertising. */
-#define ALERT_PIN_NO                      LED_1                                             /**< Is on when application has asserted. */
+#define ADVERTISING_LED_PIN_NO            LED_RGB_BLUE                                             /**< Is on when device is advertising. */
+#define ALERT_PIN_NO                      LED_RGB_RED                                            /**< Is on when application has asserted. */
 
 #define DEVICE_NAME                       "Nordic_Prox"                                     /**< Name of device. Will be included in the advertising data. */
 #define APP_ADV_INTERVAL_FAST             0x0028                                            /**< Fast advertising interval (in units of 0.625 ms. This value corresponds to 25 ms.). */
