@@ -40,6 +40,7 @@
 #define BLE_IAS_H__
 
 #include <stdint.h>
+#include <stdio.h>
 #include "ble.h"
 
 /**@brief Immediate Alert Service event type. */

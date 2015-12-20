@@ -469,6 +469,7 @@ static void advertising_start(void)
     APP_ERROR_CHECK(err_code);
     
     adv_led_blink_start();
+    printf("Advertising \n");
 }
 
 
@@ -1024,6 +1025,7 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
             // Start handling button presses
 //            err_code = app_button_enable();
 //            APP_ERROR_CHECK(err_code);
+            printf("Connected \n");
             break;
             
         case BLE_GAP_EVT_DISCONNECTED:

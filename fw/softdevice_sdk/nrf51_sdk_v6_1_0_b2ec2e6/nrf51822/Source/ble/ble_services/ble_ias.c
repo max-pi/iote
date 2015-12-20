@@ -11,7 +11,7 @@
  */
 
 /* Attention! 
-*  To maintain compliance with Nordic Semiconductor ASA’s Bluetooth profile 
+*  To maintain compliance with Nordic Semiconductor ASAï¿½s Bluetooth profile 
 *  qualification listings, this section of source code must not be modified.
 */
 
@@ -50,6 +50,7 @@ void ble_ias_on_ble_evt(ble_ias_t * p_ias, ble_evt_t * p_ble_evt)
     switch (p_ble_evt->header.evt_id)
     {
         case BLE_GATTS_EVT_WRITE:
+        	printf("Write Event \n");
             on_write(p_ias, p_ble_evt);
             break;
 
@@ -89,7 +90,7 @@ static uint32_t alert_level_char_add(ble_ias_t * p_ias)
     memset(&attr_md, 0, sizeof(attr_md));
 
     BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&attr_md.write_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&attr_md.write_perm);
 
     attr_md.vloc    = BLE_GATTS_VLOC_STACK;
     attr_md.rd_auth = 0;
