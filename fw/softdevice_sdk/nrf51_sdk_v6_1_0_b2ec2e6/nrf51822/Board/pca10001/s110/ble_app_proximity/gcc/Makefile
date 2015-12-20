@@ -28,7 +28,6 @@ C_SOURCE_FILES += app_timer.c
 
 #for printf
 C_SOURCE_FILES += retarget.c
-C_SOURCE_FILES += simple_uart.c
 
 SDK_PATH = ../../../../../
 

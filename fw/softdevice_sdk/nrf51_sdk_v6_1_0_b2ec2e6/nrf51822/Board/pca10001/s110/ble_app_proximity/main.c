@@ -54,22 +54,25 @@
 #include "ble_debug_assert_handler.h"
 #include "pstorage.h"
 #include "app_trace.h"
+#include "retarget.h"
+#include "simple_uart.h"
 
 
 
 #define IS_SRVC_CHANGED_CHARACT_PRESENT   0                                                 /**< Include or not the service_changed characteristic. if not enabled, the server's database cannot be changed for the lifetime of the device*/
 
-#define SIGNAL_ALERT_BUTTON               BUTTON_0                                          /**< Button used for send or cancel High Alert to the peer. */
-#define STOP_ALERTING_BUTTON              BUTTON_1                                          /**< Button used for clearing the Alert LED that may be blinking or turned ON because of alerts from the central. */
-#define BOND_DELETE_ALL_BUTTON_ID         BUTTON_1                                          /**< Button used for deleting all bonded centrals during startup. */
+//#define SIGNAL_ALERT_BUTTON               BUTTON_0                                          /**< Button used for send or cancel High Alert to the peer. */
+//#define STOP_ALERTING_BUTTON              BUTTON_1                                          /**< Button used for clearing the Alert LED that may be blinking or turned ON because of alerts from the central. */
+//#define BOND_DELETE_ALL_BUTTON_ID         BUTTON_1                                          /**< Button used for deleting all bonded centrals during startup. */
 
-#define ADVERTISING_LED_PIN_NO            LED_RGB_BLUE                                             /**< Is on when device is advertising. */
-#define ALERT_PIN_NO                      LED_RGB_RED                                            /**< Is on when application has asserted. */
+#define ADVERTISING_LED_PIN_NO            LED_RGB_BLUE                                      /**< Is on when device is advertising. */
+#define ALERT_PIN_NO                      LED_RGB_GREEN                                       /**< Is on when device is alerting. */
+#define ASSERT_LED						  LED_RGB_RED
 
 #define DEVICE_NAME                       "Nordic_Prox"                                     /**< Name of device. Will be included in the advertising data. */
 #define APP_ADV_INTERVAL_FAST             0x0028                                            /**< Fast advertising interval (in units of 0.625 ms. This value corresponds to 25 ms.). */
 #define APP_ADV_INTERVAL_SLOW             0x0C80                                            /**< Slow advertising interval (in units of 0.625 ms. This value corresponds to 2 seconds). */
-#define APP_SLOW_ADV_TIMEOUT              180                                               /**< The duration of the slow advertising period (in seconds). */
+#define APP_SLOW_ADV_TIMEOUT              600                                              /**< The duration of the slow advertising period (in seconds). */
 #define APP_FAST_ADV_TIMEOUT              30                                                /**< The duration of the fast advertising period (in seconds). */
 
 #define APP_TIMER_PRESCALER               0                                                 /**< Value of the RTC1 PRESCALER register. */
@@ -78,8 +81,8 @@
 
 #define BATTERY_LEVEL_MEAS_INTERVAL       APP_TIMER_TICKS(120000, APP_TIMER_PRESCALER)      /**< Battery level measurement interval (ticks). This value corresponds to 120 seconds. */
 
-#define ADV_LED_ON_TIME                   APP_TIMER_TICKS(100, APP_TIMER_PRESCALER)         /**< Advertisement LED ON period when in blinking state. */
-#define ADV_LED_OFF_TIME                  APP_TIMER_TICKS(900, APP_TIMER_PRESCALER)         /**< Advertisement LED OFF period when in blinking state. */
+#define ADV_LED_ON_TIME                   APP_TIMER_TICKS(900, APP_TIMER_PRESCALER)         /**< Advertisement LED ON period when in blinking state. */
+#define ADV_LED_OFF_TIME                  APP_TIMER_TICKS(100, APP_TIMER_PRESCALER)         /**< Advertisement LED OFF period when in blinking state. */
 
 #define MILD_ALERT_LED_ON_TIME            APP_TIMER_TICKS(100, APP_TIMER_PRESCALER)         /**< Alert LED ON period when in blinking state. */
 #define MILD_ALERT_LED_OFF_TIME           APP_TIMER_TICKS(900, APP_TIMER_PRESCALER)         /**< Alert LED OFF period when in blinking state. */
@@ -98,7 +101,7 @@
 #define BUTTON_DETECTION_DELAY            APP_TIMER_TICKS(50, APP_TIMER_PRESCALER)          /**< Delay from a GPIOTE event until a button is reported as pushed (in number of timer ticks). */
 
 #define SEC_PARAM_TIMEOUT                 30                                                /**< Timeout for Pairing Request or Security Request (in seconds). */
-#define SEC_PARAM_BOND                    1                                                 /**< Perform bonding. */
+#define SEC_PARAM_BOND                    0                                                 /**< Perform bonding. */
 #define SEC_PARAM_MITM                    0                                                 /**< Man In The Middle protection not required. */
 #define SEC_PARAM_IO_CAPABILITIES         BLE_GAP_IO_CAPS_NONE                              /**< No I/O capabilities. */
 #define SEC_PARAM_OOB                     0                                                 /**< Out Of Band data not available. */
@@ -126,7 +129,7 @@
 typedef enum
 {
     BLE_NO_ADV,                                                                             /**< No advertising running. */
-    BLE_FAST_ADV_WHITELIST,                                                                 /**< Advertising with whitelist. */
+//    BLE_FAST_ADV_WHITELIST,                                                                 /**< Advertising with whitelist. */
     BLE_FAST_ADV,                                                                           /**< Fast advertising running. */
     BLE_SLOW_ADV,                                                                           /**< Slow advertising running. */
     BLE_SLEEP,                                                                              /**< Go to system-off. */
@@ -151,13 +154,16 @@ static app_timer_id_t                     m_alert_led_blink_timer_id;           
 static app_timer_id_t                     m_adv_led_blink_timer_id;                         /**< Timer to realize the blinking of Advertisement LED. */
 static dm_application_instance_t          m_app_handle;                                     /**< Application identifier allocated by device manager */
 
-static bool                               m_memory_access_in_progress = false;              /**< Flag to keep track of ongoing operations on persistent memory. */
+//static bool                               m_memory_access_in_progress = false;              /**< Flag to keep track of ongoing operations on persistent memory. */
 
 static void on_ias_evt(ble_ias_t * p_ias, ble_ias_evt_t * p_evt);
 static void on_lls_evt(ble_lls_t * p_lls, ble_lls_evt_t * p_evt);
 static void on_ias_c_evt(ble_ias_c_t * p_lls, ble_ias_c_evt_t * p_evt);
 static void on_bas_evt(ble_bas_t * p_bas, ble_bas_evt_t * p_evt);
 static void advertising_init(uint8_t adv_flags);
+static void led_on(uint32_t pin);
+static void led_off(uint32_t pin);
+
 
 
 /**@brief Function for error handling, which is called when an error has occurred. 
@@ -178,10 +184,15 @@ void app_error_handler(uint32_t error_code, uint32_t line_num, const uint8_t * p
     //                The flash write will happen EVEN if the radio is active, thus interrupting
     //                any communication.
     //                Use with care. Un-comment the line below to use.
-    // ble_debug_assert_handler(error_code, line_num, p_file_name);
+	led_on(ASSERT_LED);
+
+    printf("ASSERT\n\r");
+    printf("Error 0x%x, line %d, file: %s\n\r", (int)error_code, (int)line_num, p_file_name);
+
+    ble_debug_assert_handler(error_code, line_num, p_file_name);
 
     // On assert, the system can only recover with a reset.
-    NVIC_SystemReset();
+	//    NVIC_SystemReset();
 }
 
 
@@ -296,7 +307,7 @@ static void adv_led_blink_start(void)
         
         is_led_on = true;
 
-        nrf_gpio_pin_set(ADVERTISING_LED_PIN_NO);
+        led_on(ADVERTISING_LED_PIN_NO);
         
         is_led_on             = true;
         m_is_adv_led_blinking = true;
@@ -318,7 +329,7 @@ static void adv_led_blink_stop(void)
 
     m_is_adv_led_blinking = false;
 
-    nrf_gpio_pin_clear(ADVERTISING_LED_PIN_NO);
+    led_off(ADVERTISING_LED_PIN_NO);
 }
 
 
@@ -333,7 +344,7 @@ static void alert_led_blink_start(void)
 
         is_led_on = true;
         
-        nrf_gpio_pin_set(ALERT_PIN_NO);
+        led_on(ALERT_PIN_NO);
         
         m_is_alert_led_blinking = true;
 
@@ -356,7 +367,7 @@ static void alert_led_blink_stop(void)
 
     m_is_alert_led_blinking = false;
 
-    nrf_gpio_pin_clear(ALERT_PIN_NO);
+    led_off(ALERT_PIN_NO);
 }
 
 
@@ -366,20 +377,20 @@ static void advertising_start(void)
 {
     uint32_t             err_code;
     ble_gap_adv_params_t adv_params;
-    ble_gap_whitelist_t  whitelist;
-    uint32_t             count;
+//    ble_gap_whitelist_t  whitelist;
+//    uint32_t             count;
 
 
-    // Verify if there is any flash access pending, if yes delay starting advertising until 
-    // it's complete.
-    err_code = pstorage_access_status_get(&count);
-    APP_ERROR_CHECK(err_code);
-    
-    if (count != 0)
-    {
-        m_memory_access_in_progress = true;
-        return;
-    }
+//    // Verify if there is any flash access pending, if yes delay starting advertising until
+//    // it's complete.
+//    err_code = pstorage_access_status_get(&count);
+//    APP_ERROR_CHECK(err_code);
+//
+//    if (count != 0)
+//    {
+//        m_memory_access_in_progress = true;
+//        return;
+//    }
 
     // Initialize advertising parameters with defaults values
     memset(&adv_params, 0, sizeof(adv_params));
@@ -387,48 +398,49 @@ static void advertising_start(void)
     adv_params.type        = BLE_GAP_ADV_TYPE_ADV_IND;
     adv_params.p_peer_addr = NULL;
     adv_params.fp          = BLE_GAP_ADV_FP_ANY;
-    adv_params.p_whitelist = NULL;
+//    adv_params.p_whitelist = NULL;
 
     // Configure advertisement according to current advertising state
     switch (m_advertising_mode)
     {
         case BLE_NO_ADV:
-            m_advertising_mode = BLE_FAST_ADV_WHITELIST;
+        	m_advertising_mode = BLE_SLOW_ADV;
+
             // fall through.
 
-        case BLE_FAST_ADV_WHITELIST:
-        {
-            ble_gap_addr_t       * p_whitelist_addr[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];
-            ble_gap_irk_t        * p_whitelist_irk[BLE_GAP_WHITELIST_IRK_MAX_COUNT];
-            
-            whitelist.addr_count = BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
-            whitelist.irk_count  = BLE_GAP_WHITELIST_IRK_MAX_COUNT;
-            whitelist.pp_addrs   = p_whitelist_addr;
-            whitelist.pp_irks    = p_whitelist_irk;
-            
-            err_code = dm_whitelist_create(&m_app_handle, &whitelist);
-            APP_ERROR_CHECK(err_code);
-
-            if ((whitelist.addr_count != 0) || (whitelist.irk_count != 0))
-            {
-                adv_params.fp          = BLE_GAP_ADV_FP_FILTER_CONNREQ;
-                adv_params.p_whitelist = &whitelist;
-
-                advertising_init(BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED);
-                m_advertising_mode = BLE_FAST_ADV;
-            }
-            else
-            {
-                m_advertising_mode = BLE_SLOW_ADV;
-            }
-
-            adv_params.interval = APP_ADV_INTERVAL_FAST;
-            adv_params.timeout  = APP_FAST_ADV_TIMEOUT;
-            break;
-        }
+//        case BLE_FAST_ADV_WHITELIST:
+//        {
+//            ble_gap_addr_t       * p_whitelist_addr[BLE_GAP_WHITELIST_ADDR_MAX_COUNT];
+//            ble_gap_irk_t        * p_whitelist_irk[BLE_GAP_WHITELIST_IRK_MAX_COUNT];
+//
+//            whitelist.addr_count = BLE_GAP_WHITELIST_ADDR_MAX_COUNT;
+//            whitelist.irk_count  = BLE_GAP_WHITELIST_IRK_MAX_COUNT;
+//            whitelist.pp_addrs   = p_whitelist_addr;
+//            whitelist.pp_irks    = p_whitelist_irk;
+//
+//            err_code = dm_whitelist_create(&m_app_handle, &whitelist);
+//            APP_ERROR_CHECK(err_code);
+//
+//            if ((whitelist.addr_count != 0) || (whitelist.irk_count != 0))
+//            {
+//                adv_params.fp          = BLE_GAP_ADV_FP_FILTER_CONNREQ;
+//                adv_params.p_whitelist = &whitelist;
+//
+//                advertising_init(BLE_GAP_ADV_FLAG_BR_EDR_NOT_SUPPORTED);
+//                m_advertising_mode = BLE_FAST_ADV;
+//            }
+//            else
+//            {
+//                m_advertising_mode = BLE_SLOW_ADV;
+//            }
+//
+//            adv_params.interval = APP_ADV_INTERVAL_FAST;
+//            adv_params.timeout  = APP_FAST_ADV_TIMEOUT;
+//            break;
+//        }
 
         case BLE_FAST_ADV:
-            advertising_init(BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE);
+            advertising_init(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
 
             adv_params.interval = APP_ADV_INTERVAL_FAST;
             adv_params.timeout  = APP_FAST_ADV_TIMEOUT;
@@ -436,7 +448,7 @@ static void advertising_start(void)
             break;
 
         case BLE_SLOW_ADV:
-            advertising_init(BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE);
+            advertising_init(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
 
             adv_params.interval = APP_ADV_INTERVAL_SLOW;
             adv_params.timeout  = APP_SLOW_ADV_TIMEOUT;
@@ -450,6 +462,9 @@ static void advertising_start(void)
     }
 
     // Start advertising.
+//	adv_params.interval = APP_ADV_INTERVAL_FAST;
+//	adv_params.timeout  = APP_FAST_ADV_TIMEOUT;
+//	m_advertising_mode  = BLE_SLOW_ADV;
     err_code = sd_ble_gap_adv_start(&adv_params);
     APP_ERROR_CHECK(err_code);
     
@@ -562,6 +577,17 @@ static void adv_led_blink_timeout_handler(void * p_context)
     }
 }
 
+static void led_on(uint32_t pin)
+{
+	nrf_gpio_pin_clear(pin);
+	//PMOS on the led?
+}
+
+static void led_off(uint32_t pin)
+{
+	nrf_gpio_pin_set(pin);
+	//PMOS on the led?
+}
 
 /**@brief Function for the LEDs initialization.
  *
@@ -570,9 +596,12 @@ static void adv_led_blink_timeout_handler(void * p_context)
 static void leds_init(void)
 {
     nrf_gpio_cfg_output(ADVERTISING_LED_PIN_NO);
+    nrf_gpio_cfg_output(ASSERT_LED);
     nrf_gpio_cfg_output(ALERT_PIN_NO);
+    led_off(ADVERTISING_LED_PIN_NO);
+    led_off(ASSERT_LED);
+    led_off(ALERT_PIN_NO);
 }
-
 
 /**@brief Function for the Timer initialization.
  *
@@ -688,7 +717,7 @@ static void tps_init(void)
     memset(&tps_init_obj, 0, sizeof(tps_init_obj));
     tps_init_obj.initial_tx_power_level = TX_POWER_LEVEL;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&tps_init_obj.tps_attr_md.read_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&tps_init_obj.tps_attr_md.read_perm);
     BLE_GAP_CONN_SEC_MODE_SET_NO_ACCESS(&tps_init_obj.tps_attr_md.write_perm);
 
     err_code = ble_tps_init(&m_tps, &tps_init_obj);
@@ -725,8 +754,8 @@ static void lls_init(void)
     lls_init_obj.error_handler       = service_error_handler;
     lls_init_obj.initial_alert_level = INITIAL_LLS_ALERT_LEVEL;
 
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&lls_init_obj.lls_attr_md.read_perm);
-    BLE_GAP_CONN_SEC_MODE_SET_ENC_NO_MITM(&lls_init_obj.lls_attr_md.write_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&lls_init_obj.lls_attr_md.read_perm);
+    BLE_GAP_CONN_SEC_MODE_SET_OPEN(&lls_init_obj.lls_attr_md.write_perm);
 
     err_code = ble_lls_init(&m_lls, &lls_init_obj);
     APP_ERROR_CHECK(err_code);
@@ -845,7 +874,7 @@ static void alert_signal(uint8_t alert_level)
 
         case BLE_CHAR_ALERT_LEVEL_HIGH_ALERT:
             alert_led_blink_stop();
-            nrf_gpio_pin_set(ALERT_PIN_NO);
+            led_on(ALERT_PIN_NO);
             break;
             
         default:
@@ -901,7 +930,7 @@ static void on_lls_evt(ble_lls_t * p_lls, ble_lls_evt_t * p_evt)
     }
 }
 
-
+//
 /**@brief Function for handling IAS Client events.
  *
  * @details This function will be called for all IAS Client events which are passed to the
@@ -912,7 +941,7 @@ static void on_lls_evt(ble_lls_t * p_lls, ble_lls_evt_t * p_evt)
  */
 static void on_ias_c_evt(ble_ias_c_t * p_ias_c, ble_ias_c_evt_t * p_evt)
 {
-    uint32_t err_code;
+//    uint32_t err_code;
 
     switch (p_evt->evt_type)
     {
@@ -926,8 +955,8 @@ static void on_ias_c_evt(ble_ias_c_t * p_ias_c, ble_ias_c_evt_t * p_evt)
 
         case BLE_IAS_C_EVT_DISCONN_COMPLETE:
             // Stop detecting button presses when not connected
-            err_code = app_button_disable();
-            APP_ERROR_CHECK(err_code);
+//            err_code = app_button_disable();
+//            APP_ERROR_CHECK(err_code);
             break;
 
         default:
@@ -981,18 +1010,20 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
     {
         case BLE_GAP_EVT_CONNECTED:
             adv_led_blink_stop();
+            led_on(ADVERTISING_LED_PIN_NO);
 
             if (m_is_link_loss_alerting)
             {
                 alert_led_blink_stop();
             }
             
+
             m_advertising_mode = BLE_NO_ADV;
             m_conn_handle      = p_ble_evt->evt.gap_evt.conn_handle;
             
             // Start handling button presses
-            err_code = app_button_enable();
-            APP_ERROR_CHECK(err_code);
+//            err_code = app_button_enable();
+//            APP_ERROR_CHECK(err_code);
             break;
             
         case BLE_GAP_EVT_DISCONNECTED:
@@ -1015,15 +1046,18 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
                     adv_led_blink_stop();
                     alert_led_blink_stop();
 
-                    // Configure buttons with sense level low as wakeup source.
-                    nrf_gpio_cfg_sense_input(SIGNAL_ALERT_BUTTON,
-                                             BUTTON_PULL,
-                                             NRF_GPIO_PIN_SENSE_LOW);
+//                    // Configure buttons with sense level low as wakeup source.
+//                    nrf_gpio_cfg_sense_input(SIGNAL_ALERT_BUTTON,
+//                                             BUTTON_PULL,
+//                                             NRF_GPIO_PIN_SENSE_LOW);
+//
+//                    nrf_gpio_cfg_sense_input(BOND_DELETE_ALL_BUTTON_ID,
+//                                             BUTTON_PULL,
+//                                             NRF_GPIO_PIN_SENSE_LOW);
+                    //No buttons on this product
+
+
                     
-                    nrf_gpio_cfg_sense_input(BOND_DELETE_ALL_BUTTON_ID,
-                                             BUTTON_PULL,
-                                             NRF_GPIO_PIN_SENSE_LOW);
-                                    
                     // Go to system-off mode
                     // (this function will not return; wakeup will cause a reset)
                     err_code = sd_power_system_off();
@@ -1057,20 +1091,20 @@ static void on_ble_evt(ble_evt_t * p_ble_evt)
  */
 static void on_sys_evt(uint32_t sys_evt)
 {
-    switch(sys_evt)
-    {
-        case NRF_EVT_FLASH_OPERATION_SUCCESS:
-        case NRF_EVT_FLASH_OPERATION_ERROR:
-            if (m_memory_access_in_progress)
-            {
-                m_memory_access_in_progress = false;
-                advertising_start();
-            }
-            break;
-        default:
-            // No implementation needed.
-            break;
-    }
+//    switch(sys_evt)
+//    {
+//        case NRF_EVT_FLASH_OPERATION_SUCCESS:
+//        case NRF_EVT_FLASH_OPERATION_ERROR:
+//            if (m_memory_access_in_progress)
+//            {
+//                m_memory_access_in_progress = false;
+//                advertising_start();
+//            }
+//            break;
+//        default:
+//            // No implementation needed.
+//            break;
+//    }
 }
 
 
@@ -1161,7 +1195,9 @@ static void device_manager_init(void)
     APP_ERROR_CHECK(err_code);
 
     // Clear all bonded centrals if the Bonds Delete button is pushed.
-    init_data.clear_persistent_data = (nrf_gpio_pin_read(BOND_DELETE_ALL_BUTTON_ID) == 0);
+    //init_data.clear_persistent_data = (nrf_gpio_pin_read(BOND_DELETE_ALL_BUTTON_ID) == 0);
+    // Not using device bonding at the moment
+
 
     err_code = dm_init(&init_data);
     APP_ERROR_CHECK(err_code);
@@ -1187,50 +1223,50 @@ static void device_manager_init(void)
  *
  * @param[in]   pin_no   The pin number of the button pressed.
  */
-static void button_event_handler(uint8_t pin_no, uint8_t button_action)
-{
-    uint32_t err_code;
-
-    if (button_action == APP_BUTTON_PUSH)
-    {
-        switch (pin_no)
-        {
-            case SIGNAL_ALERT_BUTTON:
-                if (!m_is_high_alert_signalled)
-                {
-                    err_code = ble_ias_c_send_alert_level(&m_ias_c, BLE_CHAR_ALERT_LEVEL_HIGH_ALERT);
-                }
-                else
-                {
-                    err_code = ble_ias_c_send_alert_level(&m_ias_c, BLE_CHAR_ALERT_LEVEL_NO_ALERT);
-                }
-
-                if (err_code == NRF_SUCCESS)
-                {
-                    m_is_high_alert_signalled = !m_is_high_alert_signalled;
-                }
-                else if (
-                    (err_code != BLE_ERROR_NO_TX_BUFFERS)
-                    &&
-                    (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
-                    &&
-                    (err_code != NRF_ERROR_NOT_FOUND)
-                )
-                {
-                    APP_ERROR_HANDLER(err_code);
-                }
-                break;
-
-            case STOP_ALERTING_BUTTON:
-                alert_led_blink_stop();
-                break;
-
-            default:
-                APP_ERROR_HANDLER(pin_no);
-                break;
-        }
-    }    
-}
+//static void button_event_handler(uint8_t pin_no, uint8_t button_action)
+//{
+//    uint32_t err_code;
+//
+//    if (button_action == APP_BUTTON_PUSH)
+//    {
+//        switch (pin_no)
+//        {
+//            case SIGNAL_ALERT_BUTTON:
+//                if (!m_is_high_alert_signalled)
+//                {
+//                    err_code = ble_ias_c_send_alert_level(&m_ias_c, BLE_CHAR_ALERT_LEVEL_HIGH_ALERT);
+//                }
+//                else
+//                {
+//                    err_code = ble_ias_c_send_alert_level(&m_ias_c, BLE_CHAR_ALERT_LEVEL_NO_ALERT);
+//                }
+//
+//                if (err_code == NRF_SUCCESS)
+//                {
+//                    m_is_high_alert_signalled = !m_is_high_alert_signalled;
+//                }
+//                else if (
+//                    (err_code != BLE_ERROR_NO_TX_BUFFERS)
+//                    &&
+//                    (err_code != BLE_ERROR_GATTS_SYS_ATTR_MISSING)
+//                    &&
+//                    (err_code != NRF_ERROR_NOT_FOUND)
+//                )
+//                {
+//                    APP_ERROR_HANDLER(err_code);
+//                }
+//                break;
+//
+//            case STOP_ALERTING_BUTTON:
+//                alert_led_blink_stop();
+//                break;
+//
+//            default:
+//                APP_ERROR_HANDLER(pin_no);
+//                break;
+//        }
+//    }
+//}
 
 
 /**@brief Function for initializing the GPIOTE handler module.
@@ -1243,16 +1279,16 @@ static void gpiote_init(void)
 
 /**@brief Function for initializing the button handler module.
  */
-static void buttons_init(void)
-{
-    static app_button_cfg_t buttons[] =
-    {
-        {SIGNAL_ALERT_BUTTON,  false, BUTTON_PULL, button_event_handler},
-        {STOP_ALERTING_BUTTON, false, BUTTON_PULL, button_event_handler}
-    };
-    
-    APP_BUTTON_INIT(buttons, sizeof(buttons) / sizeof(buttons[0]), BUTTON_DETECTION_DELAY, false);
-}
+//static void buttons_init(void)
+//{
+//    static app_button_cfg_t buttons[] =
+//    {
+//        {SIGNAL_ALERT_BUTTON,  false, BUTTON_PULL, button_event_handler},
+//        {STOP_ALERTING_BUTTON, false, BUTTON_PULL, button_event_handler}
+//    };
+//
+//    APP_BUTTON_INIT(buttons, sizeof(buttons) / sizeof(buttons[0]), BUTTON_DETECTION_DELAY, false);
+//}
 
 
 /**@brief Function for the Power manager.
@@ -1268,16 +1304,19 @@ static void power_manage(void)
  */
 int main(void)
 {
+	//printf("Initialize \n");
     // Initialize.
+	retarget_init();
     app_trace_init();
     leds_init();
     timers_init();
     gpiote_init();
-    buttons_init();
+//    buttons_init();
     ble_stack_init();
-    device_manager_init();
+//    device_manager_init();
     gap_params_init();
-    advertising_init(BLE_GAP_ADV_FLAGS_LE_ONLY_LIMITED_DISC_MODE);
+    advertising_init(BLE_GAP_ADV_FLAGS_LE_ONLY_GENERAL_DISC_MODE);
+    //printf("Advertising Init \n");
     services_init();
     conn_params_init();
 
