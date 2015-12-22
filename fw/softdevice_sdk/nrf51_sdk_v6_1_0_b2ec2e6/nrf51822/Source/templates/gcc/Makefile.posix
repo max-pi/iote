@@ -1,4 +1,4 @@
-GNU_INSTALL_ROOT := /Users/tony/Nordic_Development/gcc-arm-none-eabi-4_9-2015q2
+GNU_INSTALL_ROOT := /Users/tony/Programming/gcc-arm-none-eabi-4_9-2015q3
 GNU_VERSION := 4.9.3 
 GNU_PREFIX := arm-none-eabi
 
